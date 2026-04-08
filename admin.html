@@ -882,7 +882,7 @@
     // 내장된 템플릿 읽기 (fetch 불필요)
     let html = document.getElementById('index-template').textContent;
 
-    // 이스케이프된 </script> 복원
+    // 이스케이프된 <\/script> 복원
     html = html.replace(/<\\\/script>/g, '<' + '/script>');
 
     // render(loadData()); → render(실제데이터);
