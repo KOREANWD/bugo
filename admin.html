@@ -803,7 +803,7 @@
       .catch(function() { showToast('저장 실패. Firebase 설정을 확인해 주세요.'); });
   }
 
-  /* ── 주소 → 좌표 변환 (OpenStreetMap Nominatim) ── */
+  /* ── 주소 → 좌표 변환 (Kakao 지오코딩) ── */
   function geocodeAddress() {
     const address = document.getElementById('venue-address').value.trim();
     if (!address) {
@@ -816,16 +816,14 @@
     btn.textContent = '🔍 검색 중...';
     setGeocodeStatus('', '');
 
-    const url = 'https://nominatim.openstreetmap.org/search?q='
-      + encodeURIComponent(address)
-      + '&format=json&limit=1&accept-language=ko';
-
-    fetch(url, { headers: { 'Accept-Language': 'ko' } })
+    fetch('https://dapi.kakao.com/v2/local/search/address.json?query=' + encodeURIComponent(address), {
+      headers: { 'Authorization': 'KakaoAK 64c08d5023cdc9a48ba697587acb3444' }
+    })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data && data.length > 0) {
-          const lat = parseFloat(data[0].lat).toFixed(6);
-          const lng = parseFloat(data[0].lon).toFixed(6);
+        if (data.documents && data.documents.length > 0) {
+          const lat = parseFloat(data.documents[0].y).toFixed(6);
+          const lng = parseFloat(data.documents[0].x).toFixed(6);
           document.getElementById('venue-lat').value = lat;
           document.getElementById('venue-lng').value = lng;
           document.getElementById('coord-fields').style.display = 'grid';
