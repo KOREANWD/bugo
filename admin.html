@@ -538,7 +538,6 @@
     .fh-name { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
     .fh-room { display: inline-block; background: var(--accent); color: #fff; font-size: 12px; padding: 2px 12px; border-radius: 12px; margin-bottom: 10px; }
     .fh-address { font-size: 13px; color: var(--text-sub); margin-bottom: 8px; }
-    .btn-copy-addr { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--accent); background: none; border: 1px solid var(--accent-lt); border-radius: 20px; padding: 4px 12px; cursor: pointer; margin-bottom: 16px; font-family: inherit; }
     .map-wrap { width: 100%; height: 210px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: #e8e4de; }
     #naver-map { width: 100%; height: 100%; }
     .map-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; font-size: 13px; color: var(--text-muted); gap: 6px; text-align: center; }
@@ -558,7 +557,7 @@
     .sheet-icons { display: flex; justify-content: center; gap: 24px; padding: 28px 20px 8px; }
     .sheet-icon-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; font-family: inherit; font-size: 13px; color: var(--text-main); text-decoration: none; }
     .sheet-icon-btn img { width: 56px; height: 56px; border-radius: 14px; border: 1px solid #efefef; }
-    @media print { .bottom-menu-bar, .btn-copy-addr, .btn-tel, .sheet-overlay, .sheet { display: none !important; } }
+    @media print { .bottom-menu-bar, .btn-tel, .sheet-overlay, .sheet { display: none !important; } }
   </style>
 </head>
 <body>
@@ -582,7 +581,6 @@
     <p class="fh-name" id="venue-name"></p>
     <span class="fh-room" id="venue-room"></span>
     <p class="fh-address" id="venue-address"></p>
-    <button class="btn-copy-addr" id="btn-copy-addr">📋 주소 복사</button>
     <div class="map-wrap">
       <div id="naver-map"></div>
     </div>
@@ -646,7 +644,6 @@
     document.getElementById('venue-name').textContent = d.venue.name;
     document.getElementById('venue-room').textContent = d.venue.room;
     document.getElementById('venue-address').textContent = d.venue.address;
-    document.getElementById('btn-copy-addr').onclick = function() { copyText(d.venue.address, '주소가 복사되었습니다'); };
     initNaverMap(parseFloat(d.venue.lat), parseFloat(d.venue.lng), d.venue.name);
     initShareButtons(d);
   }

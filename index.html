@@ -158,20 +158,6 @@
     }
     .fh-address { font-size: 13px; color: var(--text-sub); margin-bottom: 8px; }
 
-    .btn-copy-addr {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 12px;
-      color: var(--accent);
-      background: none;
-      border: 1px solid var(--accent-lt);
-      border-radius: 20px;
-      padding: 4px 12px;
-      cursor: pointer;
-      margin-bottom: 16px;
-      font-family: inherit;
-    }
 
     .map-wrap {
       width: 100%;
@@ -318,7 +304,7 @@
     }
 
     @media print {
-      .bottom-menu-bar, .btn-copy-addr, .btn-tel,
+      .bottom-menu-bar, .btn-tel,
       .sheet-overlay, .sheet { display: none !important; }
     }
   </style>
@@ -350,7 +336,6 @@
     <p class="fh-name" id="venue-name"></p>
     <span class="fh-room" id="venue-room"></span>
     <p class="fh-address" id="venue-address"></p>
-    <button class="btn-copy-addr" id="btn-copy-addr">📋 주소 복사</button>
     <div class="map-wrap">
       <div id="naver-map"></div>
     </div>
@@ -488,9 +473,6 @@
     document.getElementById('venue-name').textContent = d.venue.name;
     document.getElementById('venue-room').textContent = d.venue.room;
     document.getElementById('venue-address').textContent = d.venue.address;
-    document.getElementById('btn-copy-addr').onclick = function() {
-      copyText(d.venue.address, '주소가 복사되었습니다');
-    };
 
     // 지도
     initNaverMap(parseFloat(d.venue.lat), parseFloat(d.venue.lng), d.venue.name);
