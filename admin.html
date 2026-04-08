@@ -623,10 +623,18 @@
     const tbody = document.getElementById('info-tbody');
     let rows = '';
     rows += '<tr><td class="label">고인<\/td><td>故' + d.deceased.name + ' ( 향년 ' + d.deceased.age + '세 )<\/td><\/tr>';
-    d.mourners.forEach(function(m, i) {
-      var tel = m.phone ? '<a class="btn-tel" href="tel:' + m.phone + '">📞<\/a>' : '';
-      rows += '<tr><td class="label">' + (i === 0 ? '상주' : '') + '<\/td><td>' + m.relation + ' : ' + m.name + tel + '<\/td><\/tr>';
-    });
+    var mi = 0, miFirst = true;
+    while (mi < d.mourners.length) {
+      var rel = d.mourners[mi].relation;
+      var group = [];
+      while (mi < d.mourners.length && d.mourners[mi].relation === rel) { group.push(d.mourners[mi++]); }
+      var names = group.map(function(m) {
+        var tel = m.phone ? '<a class="btn-tel" href="tel:' + m.phone + '">📞<\/a>' : '';
+        return m.name + tel;
+      }).join(' · ');
+      rows += '<tr><td class="label">' + (miFirst ? '상주' : '') + '<\/td><td>' + rel + ' : ' + names + '<\/td><\/tr>';
+      miFirst = false;
+    }
     rows += '<tr><td colspan="2" style="padding-top:8px;"><\/td><\/tr>';
     rows += '<tr><td class="label">별세<\/td><td>' + d.schedule.death_date + ' ' + d.schedule.death_time + '<\/td><\/tr>';
     rows += '<tr><td class="label">발인<\/td><td>' + d.schedule.funeral_date + ' ' + d.schedule.funeral_time + '<\/td><\/tr>';

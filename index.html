@@ -455,16 +455,24 @@
       <td>故${d.deceased.name} ( 향년 ${d.deceased.age}세 )</td>
     </tr>`;
 
-    // 상주
-    d.mourners.forEach(function(m, i) {
-      const tel = m.phone
-        ? `<a class="btn-tel" href="tel:${m.phone}">📞</a>`
-        : '';
+    // 상주 (같은 관계명은 한 줄로 묶기)
+    let mi = 0, miFirst = true;
+    while (mi < d.mourners.length) {
+      const rel = d.mourners[mi].relation;
+      const group = [];
+      while (mi < d.mourners.length && d.mourners[mi].relation === rel) {
+        group.push(d.mourners[mi++]);
+      }
+      const names = group.map(function(m) {
+        const tel = m.phone ? `<a class="btn-tel" href="tel:${m.phone}">📞</a>` : '';
+        return m.name + tel;
+      }).join(' · ');
       rows += `<tr>
-        <td class="label">${i === 0 ? '상주' : ''}</td>
-        <td>${m.relation} : ${m.name}${tel}</td>
+        <td class="label">${miFirst ? '상주' : ''}</td>
+        <td>${rel} : ${names}</td>
       </tr>`;
-    });
+      miFirst = false;
+    }
 
     // 구분
     rows += `<tr><td colspan="2" style="padding-top:8px;"></td></tr>`;
