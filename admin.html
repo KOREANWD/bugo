@@ -883,7 +883,7 @@
     let html = document.getElementById('index-template').textContent;
 
     // 이스케이프된 </script> 복원
-    html = html.replace(/<\\\/script>/g, '</script>');
+    html = html.replace(/<\\\/script>/g, '<' + '/script>');
 
     // render(loadData()); → render(실제데이터);
     html = html.replace(
