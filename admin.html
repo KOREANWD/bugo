@@ -631,7 +631,7 @@
       var names = group.map(function(m) {
         var tel = m.phone ? '<a class="btn-tel" href="tel:' + m.phone + '">📞<\/a>' : '';
         return m.name + tel;
-      }).join(' · ');
+      }).join(', ');
       rows += '<tr><td class="label">' + (miFirst ? '상주' : '') + '<\/td><td>' + rel + ' : ' + names + '<\/td><\/tr>';
       miFirst = false;
     }

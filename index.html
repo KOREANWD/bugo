@@ -466,7 +466,7 @@
       const names = group.map(function(m) {
         const tel = m.phone ? `<a class="btn-tel" href="tel:${m.phone}">📞</a>` : '';
         return m.name + tel;
-      }).join(' · ');
+      }).join(', ');
       rows += `<tr>
         <td class="label">${miFirst ? '상주' : ''}</td>
         <td>${rel} : ${names}</td>
