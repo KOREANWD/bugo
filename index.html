@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>부고</title>
+  <meta property="og:type" content="website">
+
+  <script type="text/javascript"
+    src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=YOUR_NCP_CLIENT_ID">
+  </script>
+
+  <!-- 카카오 공유 SDK (앱 키 교체 필요) -->
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+    integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4"
+    crossorigin="anonymous"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-page:   #f5f4f0;
+      --bg-card:   #ffffff;
+      --text-main: #1c1c1c;
+      --text-sub:  #5a5a5a;
+      --text-muted:#9a9a9a;
+      --accent:    #8b7355;
+      --accent-lt: #c8b89a;
+      --border:    #e0dbd2;
+      --btn-dark:  #2c3e50;
+      --radius:    10px;
+      --max-w:     480px;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      font-family: 'Noto Serif KR', 'NanumMyeongjo', Georgia, serif;
+      background: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 70px;
+    }
+
+    .wrap { max-width: var(--max-w); margin: 0 auto; }
+
+    .section {
+      background: var(--bg-card);
+      margin-bottom: 8px;
+      padding: 28px 20px;
+    }
+
+    .sec-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      color: var(--accent);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sec-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── 히어로 ── */
+    .top-container {
+      padding: 50px 0 130px 0;
+      background-image: url('https://www.mbugo.com/obit/dj/images/dj-bg2.webp');
+      background-size: cover;
+      background-position: center;
+      margin-bottom: 8px;
+    }
+
+    .hero-img img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .bugo-contents {
+      margin: -160px 10px 0 10px;
+      padding: 30px 20px;
+      position: relative;
+    }
+
+    .bugo-title {
+      font-size: 50px;
+      color: #ffffff;
+      font-weight: 900;
+      text-align: center;
+      letter-spacing: 20px;
+      margin-bottom: 30px;
+    }
+
+    .bugo-message {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 400;
+      text-align: center;
+      line-height: 1.8;
+      word-break: keep-all;
+      white-space: pre-line;
+    }
+
+    /* ── 정보 테이블 ── */
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+    }
+
+    .info-table td {
+      text-align: left;
+      vertical-align: top;
+      color: #000000;
+      padding: 4px 0;
+      word-break: keep-all;
+      font-weight: 400;
+    }
+
+    .info-table td.label {
+      width: 52px;
+      min-width: 52px;
+      font-weight: 700;
+    }
+
+    .btn-tel {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 10px;
+      background: var(--bg-page);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--btn-dark);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    /* ── 빈소 ── */
+    .fh-name { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+    .fh-room {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      padding: 2px 12px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+    .fh-address { font-size: 13px; color: var(--text-sub); margin-bottom: 8px; }
+
+    .btn-copy-addr {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--accent);
+      background: none;
+      border: 1px solid var(--accent-lt);
+      border-radius: 20px;
+      padding: 4px 12px;
+      cursor: pointer;
+      margin-bottom: 16px;
+      font-family: inherit;
+    }
+
+    .map-wrap {
+      width: 100%;
+      height: 210px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #e8e4de;
+    }
+
+    #naver-map { width: 100%; height: 100%; }
+
+    .map-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      font-size: 13px;
+      color: var(--text-muted);
+      gap: 6px;
+      text-align: center;
+    }
+
+    /* ── 하단 고정 바 ── */
+    .bottom-menu-bar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: var(--max-w);
+      z-index: 1000;
+      background: #fff;
+      border-top: 1px solid #e8e8e8;
+    }
+
+    .footer-menu { display: flex; }
+
+    .footer-menu a {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 10px 0 14px;
+      color: #1f1f1f;
+      text-decoration: none;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .footer-menu a:first-child { border-right: 1px solid #e8e8e8; }
+    .footer-menu a img { width: 22px; height: 22px; }
+
+    /* ── 토스트 ── */
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: rgba(28,28,28,.92);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 24px;
+      font-size: 13px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity .25s, transform .25s;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── 공유 시트 ── */
+    .sheet-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 2000;
+    }
+    .sheet-overlay.open { display: block; }
+
+    .sheet {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      width: 100%;
+      max-width: var(--max-w);
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      padding: 0 0 32px;
+      z-index: 2001;
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+    }
+    .sheet.open { transform: translateX(-50%) translateY(0); }
+
+    .sheet-handle {
+      width: 40px;
+      height: 4px;
+      background: #e0dbd2;
+      border-radius: 2px;
+      margin: 12px auto 0;
+    }
+
+    .sheet-title {
+      font-size: 15px;
+      font-weight: 600;
+      text-align: center;
+      padding: 16px 20px 14px;
+      border-bottom: 1px solid #f0ede8;
+      color: var(--text-main);
+    }
+
+    .sheet-icons {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      padding: 28px 20px 8px;
+    }
+
+    .sheet-icon-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+
+    .sheet-icon-btn img {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      border: 1px solid #efefef;
+    }
+
+    @media print {
+      .bottom-menu-bar, .btn-copy-addr, .btn-tel,
+      .sheet-overlay, .sheet { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ① 히어로 -->
+  <div class="top-container">
+    <div class="hero-img">
+      <img src="https://www.mbugo.com/obit/dj/images/top-6.webp" alt="">
+    </div>
+    <div class="bugo-contents">
+      <p class="bugo-title">부고</p>
+      <h2 class="bugo-message" id="hero-message"></h2>
+    </div>
+  </div>
+
+  <!-- ② 고인 & 상주 -->
+  <div class="section">
+    <table class="info-table">
+      <tbody id="info-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- ③ 빈소 위치 -->
+  <div class="section">
+    <p class="sec-title">빈소 위치</p>
+    <p class="fh-name" id="venue-name"></p>
+    <span class="fh-room" id="venue-room"></span>
+    <p class="fh-address" id="venue-address"></p>
+    <button class="btn-copy-addr" id="btn-copy-addr">📋 주소 복사</button>
+    <div class="map-wrap">
+      <div id="naver-map"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 하단 고정 바 -->
+<div class="bottom-menu-bar">
+  <div class="footer-menu">
+    <a href="#" onclick="openShare(); return false;">
+      <img src="https://www.mbugo.com/obit/assets/images/icon/share.svg" alt="">
+      <span>부고 보내기</span>
+    </a>
+    <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'}); return false;">
+      <img src="https://www.mbugo.com/obit/assets/images/icon/angle-up.svg" alt="">
+      <span>맨 위로</span>
+    </a>
+  </div>
+</div>
+
+<!-- 공유 시트 -->
+<div class="sheet-overlay" id="sheet-overlay" onclick="closeShare()"></div>
+<div class="sheet" id="share-sheet">
+  <div class="sheet-handle"></div>
+  <p class="sheet-title">부고장을 보내실 수단을 선택해 주세요</p>
+  <div class="sheet-icons">
+    <button class="sheet-icon-btn" id="btn-kakao-share">
+      <img src="https://www.mbugo.com/obit/assets/images/icon-kakaotalk.webp" alt="카카오톡">
+      <span>카카오톡</span>
+    </button>
+    <a class="sheet-icon-btn" id="btn-sms-share" href="#">
+      <img src="https://www.mbugo.com/obit/assets/images/icon-message.webp" alt="문자 메시지">
+      <span>문자 메시지</span>
+    </a>
+    <button class="sheet-icon-btn" onclick="copyLink()">
+      <img src="https://www.mbugo.com/obit/assets/images/icon-link.webp" alt="링크 복사">
+      <span>링크 복사</span>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ── Firebase 설정 (Firebase 콘솔에서 복사한 값으로 교체) ── */
+  const FIREBASE_CONFIG = {
+    apiKey:            "AIzaSyDxpUD0GU0Lm5cYTgGXU8SXd-r0M4xSVAQ",
+    authDomain:        "bugo-d29c0.firebaseapp.com",
+    databaseURL:       "https://bugo-d29c0-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "bugo-d29c0",
+    storageBucket:     "bugo-d29c0.firebasestorage.app",
+    messagingSenderId: "796600365241",
+    appId:             "1:796600365241:web:e5327fb702d81c835d6b68",
+  };
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const dataRef = firebase.database().ref('bugoData');
+
+  /* ── 기본값 ── */
+  const DEFAULTS = {
+    hero: {
+      message: '故홍길동님께서\n2026년 4월 30일 00시 00분\n별세하셨음을 삼가 알려 드립니다.\n가시는 길 깊은 애도와 명복을\n빌어주시길 진심으로 바랍니다.'
+    },
+    deceased: { name: '홍길동', age: '86' },
+    mourners: [
+      { relation: '장남', name: '홍민준', phone: '01012345678' },
+      { relation: '차남', name: '홍민서', phone: '' },
+      { relation: '장녀', name: '홍지수', phone: '01098765432' },
+      { relation: '며느리', name: '김수연', phone: '' }
+    ],
+    schedule: {
+      death_date: '2026년 4월 30일 (목)', death_time: '00시 00분',
+      funeral_date: '2026년 5월 2일 (토)', funeral_time: '00시 00분'
+    },
+    venue: {
+      name: '서울성모병원 장례식장', room: '3호실',
+      address: '서울특별시 서초구 반포대로 222',
+      lat: 37.5014, lng: 127.0049
+    }
+  };
+
+  /* ── 페이지 렌더링 ── */
+  function render(d) {
+    // 히어로
+    document.getElementById('hero-message').textContent = d.hero.message;
+    document.title = '부고 - 故 ' + d.deceased.name;
+
+    // 정보 테이블
+    const tbody = document.getElementById('info-tbody');
+    let rows = '';
+
+    // 고인
+    rows += `<tr>
+      <td class="label">고인</td>
+      <td>故${d.deceased.name} ( 향년 ${d.deceased.age}세 )</td>
+    </tr>`;
+
+    // 상주
+    d.mourners.forEach(function(m, i) {
+      const tel = m.phone
+        ? `<a class="btn-tel" href="tel:${m.phone}">📞</a>`
+        : '';
+      rows += `<tr>
+        <td class="label">${i === 0 ? '상주' : ''}</td>
+        <td>${m.relation} : ${m.name}${tel}</td>
+      </tr>`;
+    });
+
+    // 구분
+    rows += `<tr><td colspan="2" style="padding-top:8px;"></td></tr>`;
+
+    // 별세 / 발인
+    rows += `<tr>
+      <td class="label">별세</td>
+      <td>${d.schedule.death_date} ${d.schedule.death_time}</td>
+    </tr>
+    <tr>
+      <td class="label">발인</td>
+      <td>${d.schedule.funeral_date} ${d.schedule.funeral_time}</td>
+    </tr>`;
+
+    tbody.innerHTML = rows;
+
+    // 빈소
+    document.getElementById('venue-name').textContent = d.venue.name;
+    document.getElementById('venue-room').textContent = d.venue.room;
+    document.getElementById('venue-address').textContent = d.venue.address;
+    document.getElementById('btn-copy-addr').onclick = function() {
+      copyText(d.venue.address, '주소가 복사되었습니다');
+    };
+
+    // 지도
+    initNaverMap(parseFloat(d.venue.lat), parseFloat(d.venue.lng), d.venue.name);
+
+    // 공유 버튼
+    initShareButtons(d);
+  }
+
+  /* ── 네이버 지도 ── */
+  function initNaverMap(lat, lng, name) {
+    if (typeof naver === 'undefined' || !naver.maps) {
+      document.getElementById('naver-map').innerHTML =
+        '<div class="map-placeholder">🗺<br>네이버 지도 API 키를 설정해 주세요<br><small>(ncpClientId 교체)</small></div>';
+      return;
+    }
+    const map = new naver.maps.Map('naver-map', {
+      center: new naver.maps.LatLng(lat, lng),
+      zoom: 16,
+      zoomControl: false,
+      scaleControl: false,
+      mapDataControl: false,
+    });
+    new naver.maps.Marker({
+      position: new naver.maps.LatLng(lat, lng),
+      map: map,
+      title: name,
+    });
+    map.setOptions({ draggable: false, scrollWheel: false });
+  }
+
+  /* ── 카카오 SDK 초기화 ── */
+  (function() {
+    try {
+      Kakao.init('YOUR_KAKAO_JAVASCRIPT_KEY'); // ← 카카오 앱 키 교체
+    } catch(e) {}
+  })();
+
+  /* ── 공유 시트 ── */
+  function openShare() {
+    document.getElementById('sheet-overlay').classList.add('open');
+    document.getElementById('share-sheet').classList.add('open');
+  }
+
+  function closeShare() {
+    document.getElementById('sheet-overlay').classList.remove('open');
+    document.getElementById('share-sheet').classList.remove('open');
+  }
+
+  function initShareButtons(d) {
+    const shareMsg = '[부고] 故' + d.deceased.name + '님의 별세를 삼가 알려드립니다.\n'
+      + '발인 ' + d.schedule.funeral_date + ' ' + d.schedule.funeral_time + '\n'
+      + d.venue.name + ' ' + d.venue.room + '\n\n';
+    const shareUrl = location.href;
+
+    // 카카오톡
+    document.getElementById('btn-kakao-share').onclick = function() {
+      try {
+        Kakao.Share.sendDefault({
+          objectType: 'text',
+          text: shareMsg + shareUrl,
+          link: { mobileWebUrl: shareUrl, webUrl: shareUrl },
+        });
+      } catch(e) {
+        showToast('카카오 앱 키를 설정해 주세요');
+      }
+      closeShare();
+    };
+
+    // 문자 메시지
+    document.getElementById('btn-sms-share').href =
+      'sms:?body=' + encodeURIComponent(shareMsg + shareUrl);
+    document.getElementById('btn-sms-share').onclick = function() {
+      closeShare();
+    };
+  }
+
+  function copyLink() {
+    copyText(location.href, '링크가 복사되었습니다');
+    closeShare();
+  }
+
+  /* ── 클립보드 복사 ── */
+  function copyText(text, msg) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function() { showToast(msg); });
+    } else {
+      const el = document.createElement('textarea');
+      el.value = text;
+      el.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(el);
+      el.focus(); el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      showToast(msg);
+    }
+  }
+
+  /* ── 토스트 ── */
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(function() { el.classList.remove('show'); }, 2200);
+  }
+
+  /* ── 초기화: Firebase에서 실시간으로 데이터 수신 ── */
+  dataRef.on('value', function(snapshot) {
+    render(snapshot.val() || DEFAULTS);
+  });
+</script>
+</body>
+</html>

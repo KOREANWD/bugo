@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>부고 관리자</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:  #8b7355;
+      --accent2: #c8b89a;
+      --bg:      #f5f4f0;
+      --card:    #ffffff;
+      --border:  #e0dbd2;
+      --text:    #1c1c1c;
+      --sub:     #5a5a5a;
+      --muted:   #9a9a9a;
+      --red:     #e53935;
+      --green:   #2e7d32;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      padding-bottom: 40px;
+    }
+
+    /* ── 헤더 ── */
+    .header {
+      background: #1c1a17;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.05em;
+    }
+
+    .header-btns { display: flex; gap: 8px; }
+
+    .btn-preview {
+      padding: 7px 14px;
+      background: transparent;
+      border: 1px solid rgba(200,184,154,.5);
+      border-radius: 6px;
+      color: #c8b89a;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-save {
+      padding: 7px 18px;
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-save:active { opacity: .8; }
+
+    .btn-export {
+      padding: 7px 18px;
+      background: #2e7d32;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-export:active { opacity: .8; }
+
+    /* ── 레이아웃 ── */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── 카드 ── */
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── 폼 요소 ── */
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--sub);
+      margin-bottom: 5px;
+    }
+
+    input[type="text"],
+    input[type="tel"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      background: #fafafa;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      background: #fff;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 110px;
+      line-height: 1.7;
+    }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* ── 상주 목록 ── */
+    .mourner-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .mourner-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 130px 32px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .mourner-row input {
+      margin: 0;
+    }
+
+    .btn-remove {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff0f0;
+      border: 1px solid #ffcdd2;
+      border-radius: 6px;
+      color: var(--red);
+      font-size: 16px;
+      cursor: pointer;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .btn-add {
+      width: 100%;
+      padding: 8px;
+      background: #f5f4f0;
+      border: 1px dashed var(--accent2);
+      border-radius: 8px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .mourner-header {
+      display: grid;
+      grid-template-columns: 80px 1fr 130px 32px;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .mourner-header span {
+      font-size: 11px;
+      color: var(--muted);
+      padding-left: 2px;
+    }
+
+    /* ── 힌트 ── */
+    .hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    /* ── 토스트 ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: rgba(28,28,28,.92);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 24px;
+      font-size: 13px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity .25s, transform .25s;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .btn-geocode {
+      width: 100%;
+      padding: 10px;
+      background: #1c1a17;
+      border: none;
+      border-radius: 8px;
+      color: #c8b89a;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-geocode:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .geocode-ok  { color: #2e7d32; }
+    .geocode-err { color: #e53935; }
+
+    @media (max-width: 480px) {
+      .mourner-row { grid-template-columns: 70px 1fr 110px 32px; }
+      .mourner-header { grid-template-columns: 70px 1fr 110px 32px; }
+      .row-3 { grid-template-columns: 1fr 1fr; }
+    }
+  /* ── 비밀번호 게이트 ── */
+  .pw-overlay {
+    position: fixed;
+    inset: 0;
+    background: #1c1a17;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  .pw-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 36px 28px;
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+  }
+  .pw-box h2 { font-size: 16px; font-weight: 600; color: var(--text); }
+  .pw-box input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    text-align: center;
+    letter-spacing: 0.2em;
+    font-family: inherit;
+    outline: none;
+  }
+  .pw-box input:focus { border-color: var(--accent); }
+  .pw-box button {
+    padding: 10px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .pw-error { font-size: 12px; color: var(--red); min-height: 16px; }
+  </style>
+</head>
+<body>
+
+<!-- 비밀번호 게이트 -->
+<div class="pw-overlay" id="pw-overlay">
+  <div class="pw-box">
+    <h2>⚙ 부고 관리자</h2>
+    <input type="password" id="pw-input" placeholder="비밀번호 입력" autofocus>
+    <p class="pw-error" id="pw-error"></p>
+    <button onclick="checkPassword()">입장</button>
+  </div>
+</div>
+
+<!-- 헤더 -->
+<div class="header">
+  <h1>⚙ 부고 관리자</h1>
+  <div class="header-btns">
+    <button class="btn-preview" onclick="window.open('index.html','_blank')">미리보기</button>
+    <button class="btn-save" onclick="saveAll()">저장</button>
+    <button class="btn-export" onclick="exportHTML()">⬇ HTML 내보내기</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 1. 히어로 문구 -->
+  <div class="card">
+    <p class="card-title">① 히어로 문구</p>
+    <div class="field">
+      <label>배경 이미지 위에 표시될 부고 전하는 말</label>
+      <textarea id="hero-message" placeholder="故홍길동님께서&#10;2026년 4월 30일 00시 00분&#10;별세하셨음을 삼가 알려 드립니다.&#10;가시는 길 깊은 애도와 명복을&#10;빌어주시길 진심으로 바랍니다."></textarea>
+      <p class="hint">줄바꿈은 Enter로 입력하세요.</p>
+    </div>
+  </div>
+
+  <!-- 2. 고인 정보 -->
+  <div class="card">
+    <p class="card-title">② 고인 정보</p>
+    <div class="row-2">
+      <div class="field">
+        <label>고인 성명</label>
+        <input type="text" id="deceased-name" placeholder="홍길동">
+      </div>
+      <div class="field">
+        <label>향년 (세)</label>
+        <input type="number" id="deceased-age" placeholder="86" min="1" max="150">
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 상주 정보 -->
+  <div class="card">
+    <p class="card-title">③ 상주 정보</p>
+    <div class="mourner-header">
+      <span>관계</span>
+      <span>성명</span>
+      <span>연락처 (선택)</span>
+      <span></span>
+    </div>
+    <div class="mourner-list" id="mourner-list"></div>
+    <button class="btn-add" onclick="addMourner()">+ 상주 추가</button>
+  </div>
+
+  <!-- 4. 별세일 / 발인일 -->
+  <div class="card">
+    <p class="card-title">④ 별세일 · 발인일</p>
+    <div class="row-2">
+      <div class="field">
+        <label>별세 날짜</label>
+        <input type="text" id="death-date" placeholder="2026년 4월 30일 (목)">
+      </div>
+      <div class="field">
+        <label>별세 시간</label>
+        <input type="text" id="death-time" placeholder="00시 00분">
+      </div>
+    </div>
+    <div class="row-2">
+      <div class="field">
+        <label>발인 날짜</label>
+        <input type="text" id="funeral-date" placeholder="2026년 5월 2일 (토)">
+      </div>
+      <div class="field">
+        <label>발인 시간</label>
+        <input type="text" id="funeral-time" placeholder="00시 00분">
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. 빈소 위치 -->
+  <div class="card">
+    <p class="card-title">⑤ 빈소 위치</p>
+    <div class="row-2">
+      <div class="field">
+        <label>장례식장명</label>
+        <input type="text" id="venue-name" placeholder="서울성모병원 장례식장">
+      </div>
+      <div class="field">
+        <label>호실</label>
+        <input type="text" id="venue-room" placeholder="3호실">
+      </div>
+    </div>
+    <div class="field">
+      <label>주소</label>
+      <input type="text" id="venue-address" placeholder="서울특별시 서초구 반포대로 222">
+    </div>
+    <div class="field">
+      <button class="btn-geocode" id="btn-geocode" onclick="geocodeAddress()">
+        📍 주소로 좌표 자동 입력
+      </button>
+      <p class="hint" id="geocode-status"></p>
+    </div>
+    <div class="row-2" id="coord-fields" style="display:none;">
+      <div class="field">
+        <label>위도 (lat)</label>
+        <input type="text" id="venue-lat" placeholder="37.5014" readonly>
+      </div>
+      <div class="field">
+        <label>경도 (lng)</label>
+        <input type="text" id="venue-lng" placeholder="127.0049" readonly>
+      </div>
+    </div>
+  </div>
+
+  <!-- 배포 안내 -->
+  <div class="card">
+    <p class="card-title">🚀 Netlify 배포 방법</p>
+    <ol style="padding-left:18px; line-height:2; color:var(--sub); font-size:13px;">
+      <li>위 항목을 모두 입력한 뒤 <strong style="color:var(--text)">⬇ HTML 내보내기</strong> 클릭 → <code>index.html</code> 다운로드</li>
+      <li><a href="https://app.netlify.com/drop" target="_blank" style="color:#0070f3;">netlify.com/drop</a> 접속 (무료, 회원가입 불필요)</li>
+      <li>다운로드된 <code>index.html</code>을 페이지 중앙에 <strong style="color:var(--text)">드래그앤드롭</strong></li>
+      <li>자동으로 URL 생성 → 카카오톡 등으로 공유</li>
+    </ol>
+    <p style="font-size:12px; color:var(--muted); margin-top:12px;">※ 내용 수정 시 내보내기 → Netlify에 다시 업로드하면 URL은 그대로 유지됩니다.</p>
+  </div>
+
+</div><!-- /container -->
+
+<!-- index.html 템플릿 내장 (fetch 없이 내보내기용) -->
+<script type="text/plain" id="index-template">
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>부고</title>
+  <meta property="og:type" content="website">
+
+  <script type="text/javascript"
+    src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=YOUR_NCP_CLIENT_ID">
+  <\/script>
+
+  <!-- 카카오 공유 SDK (앱 키 교체 필요) -->
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+    integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4"
+    crossorigin="anonymous"><\/script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-page:   #f5f4f0;
+      --bg-card:   #ffffff;
+      --text-main: #1c1c1c;
+      --text-sub:  #5a5a5a;
+      --text-muted:#9a9a9a;
+      --accent:    #8b7355;
+      --accent-lt: #c8b89a;
+      --border:    #e0dbd2;
+      --btn-dark:  #2c3e50;
+      --radius:    10px;
+      --max-w:     480px;
+    }
+    html { font-size: 16px; }
+    body {
+      font-family: 'Noto Serif KR', 'NanumMyeongjo', Georgia, serif;
+      background: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 70px;
+    }
+    .wrap { max-width: var(--max-w); margin: 0 auto; }
+    .section { background: var(--bg-card); margin-bottom: 8px; padding: 28px 20px; }
+    .sec-title { font-size: 11px; font-weight: 600; letter-spacing: 0.18em; color: var(--accent); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+    .sec-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .top-container { padding: 50px 0 130px 0; background-image: url('https://www.mbugo.com/obit/dj/images/dj-bg2.webp'); background-size: cover; background-position: center; margin-bottom: 8px; }
+    .hero-img img { width: 100%; height: auto; display: block; }
+    .bugo-contents { margin: -160px 10px 0 10px; padding: 30px 20px; position: relative; }
+    .bugo-title { font-size: 50px; color: #ffffff; font-weight: 900; text-align: center; letter-spacing: 20px; margin-bottom: 30px; }
+    .bugo-message { color: #ffffff; font-size: 18px; font-weight: 400; text-align: center; line-height: 1.8; word-break: keep-all; white-space: pre-line; }
+    .info-table { width: 100%; border-collapse: collapse; font-size: 16px; }
+    .info-table td { text-align: left; vertical-align: top; color: #000000; padding: 4px 0; word-break: keep-all; font-weight: 400; }
+    .info-table td.label { width: 52px; min-width: 52px; font-weight: 700; }
+    .btn-tel { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; background: var(--bg-page); border-radius: 20px; font-size: 12px; color: var(--btn-dark); text-decoration: none; border: 1px solid var(--border); margin-left: 6px; vertical-align: middle; }
+    .fh-name { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+    .fh-room { display: inline-block; background: var(--accent); color: #fff; font-size: 12px; padding: 2px 12px; border-radius: 12px; margin-bottom: 10px; }
+    .fh-address { font-size: 13px; color: var(--text-sub); margin-bottom: 8px; }
+    .btn-copy-addr { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--accent); background: none; border: 1px solid var(--accent-lt); border-radius: 20px; padding: 4px 12px; cursor: pointer; margin-bottom: 16px; font-family: inherit; }
+    .map-wrap { width: 100%; height: 210px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: #e8e4de; }
+    #naver-map { width: 100%; height: 100%; }
+    .map-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; font-size: 13px; color: var(--text-muted); gap: 6px; text-align: center; }
+    .bottom-menu-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: var(--max-w); z-index: 1000; background: #fff; border-top: 1px solid #e8e8e8; }
+    .footer-menu { display: flex; }
+    .footer-menu a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px 0 14px; color: #1f1f1f; text-decoration: none; font-size: 12px; cursor: pointer; }
+    .footer-menu a:first-child { border-right: 1px solid #e8e8e8; }
+    .footer-menu a img { width: 22px; height: 22px; }
+    .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(16px); background: rgba(28,28,28,.92); color: #fff; padding: 10px 22px; border-radius: 24px; font-size: 13px; white-space: nowrap; opacity: 0; transition: opacity .25s, transform .25s; z-index: 9999; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .sheet-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 2000; }
+    .sheet-overlay.open { display: block; }
+    .sheet { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%); width: 100%; max-width: var(--max-w); background: #fff; border-radius: 20px 20px 0 0; padding: 0 0 32px; z-index: 2001; transition: transform .3s cubic-bezier(.4,0,.2,1); }
+    .sheet.open { transform: translateX(-50%) translateY(0); }
+    .sheet-handle { width: 40px; height: 4px; background: #e0dbd2; border-radius: 2px; margin: 12px auto 0; }
+    .sheet-title { font-size: 15px; font-weight: 600; text-align: center; padding: 16px 20px 14px; border-bottom: 1px solid #f0ede8; color: var(--text-main); }
+    .sheet-icons { display: flex; justify-content: center; gap: 24px; padding: 28px 20px 8px; }
+    .sheet-icon-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; font-family: inherit; font-size: 13px; color: var(--text-main); text-decoration: none; }
+    .sheet-icon-btn img { width: 56px; height: 56px; border-radius: 14px; border: 1px solid #efefef; }
+    @media print { .bottom-menu-bar, .btn-copy-addr, .btn-tel, .sheet-overlay, .sheet { display: none !important; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-container">
+    <div class="hero-img">
+      <img src="https://www.mbugo.com/obit/dj/images/top-6.webp" alt="">
+    </div>
+    <div class="bugo-contents">
+      <p class="bugo-title">부고</p>
+      <h2 class="bugo-message" id="hero-message"></h2>
+    </div>
+  </div>
+  <div class="section">
+    <table class="info-table">
+      <tbody id="info-tbody"></tbody>
+    </table>
+  </div>
+  <div class="section">
+    <p class="sec-title">빈소 위치</p>
+    <p class="fh-name" id="venue-name"></p>
+    <span class="fh-room" id="venue-room"></span>
+    <p class="fh-address" id="venue-address"></p>
+    <button class="btn-copy-addr" id="btn-copy-addr">📋 주소 복사</button>
+    <div class="map-wrap">
+      <div id="naver-map"></div>
+    </div>
+  </div>
+</div>
+<div class="bottom-menu-bar">
+  <div class="footer-menu">
+    <a href="#" onclick="openShare(); return false;">
+      <img src="https://www.mbugo.com/obit/assets/images/icon/share.svg" alt="">
+      <span>부고 보내기</span>
+    </a>
+    <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'}); return false;">
+      <img src="https://www.mbugo.com/obit/assets/images/icon/angle-up.svg" alt="">
+      <span>맨 위로</span>
+    </a>
+  </div>
+</div>
+<div class="sheet-overlay" id="sheet-overlay" onclick="closeShare()"></div>
+<div class="sheet" id="share-sheet">
+  <div class="sheet-handle"></div>
+  <p class="sheet-title">부고장을 보내실 수단을 선택해 주세요</p>
+  <div class="sheet-icons">
+    <button class="sheet-icon-btn" id="btn-kakao-share">
+      <img src="https://www.mbugo.com/obit/assets/images/icon-kakaotalk.webp" alt="카카오톡">
+      <span>카카오톡</span>
+    </button>
+    <a class="sheet-icon-btn" id="btn-sms-share" href="#">
+      <img src="https://www.mbugo.com/obit/assets/images/icon-message.webp" alt="문자 메시지">
+      <span>문자 메시지</span>
+    </a>
+    <button class="sheet-icon-btn" onclick="copyLink()">
+      <img src="https://www.mbugo.com/obit/assets/images/icon-link.webp" alt="링크 복사">
+      <span>링크 복사</span>
+    </button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+  function render(d) {
+    document.getElementById('hero-message').textContent = d.hero.message;
+    document.title = '부고 - 故 ' + d.deceased.name;
+    const tbody = document.getElementById('info-tbody');
+    let rows = '';
+    rows += '<tr><td class="label">고인<\/td><td>故' + d.deceased.name + ' ( 향년 ' + d.deceased.age + '세 )<\/td><\/tr>';
+    d.mourners.forEach(function(m, i) {
+      var tel = m.phone ? '<a class="btn-tel" href="tel:' + m.phone + '">📞<\/a>' : '';
+      rows += '<tr><td class="label">' + (i === 0 ? '상주' : '') + '<\/td><td>' + m.relation + ' : ' + m.name + tel + '<\/td><\/tr>';
+    });
+    rows += '<tr><td colspan="2" style="padding-top:8px;"><\/td><\/tr>';
+    rows += '<tr><td class="label">별세<\/td><td>' + d.schedule.death_date + ' ' + d.schedule.death_time + '<\/td><\/tr>';
+    rows += '<tr><td class="label">발인<\/td><td>' + d.schedule.funeral_date + ' ' + d.schedule.funeral_time + '<\/td><\/tr>';
+    tbody.innerHTML = rows;
+    document.getElementById('venue-name').textContent = d.venue.name;
+    document.getElementById('venue-room').textContent = d.venue.room;
+    document.getElementById('venue-address').textContent = d.venue.address;
+    document.getElementById('btn-copy-addr').onclick = function() { copyText(d.venue.address, '주소가 복사되었습니다'); };
+    initNaverMap(parseFloat(d.venue.lat), parseFloat(d.venue.lng), d.venue.name);
+    initShareButtons(d);
+  }
+  function initNaverMap(lat, lng, name) {
+    if (typeof naver === 'undefined' || !naver.maps) {
+      document.getElementById('naver-map').innerHTML = '<div class="map-placeholder">🗺<br>네이버 지도 API 키를 설정해 주세요<\/div>';
+      return;
+    }
+    var map = new naver.maps.Map('naver-map', { center: new naver.maps.LatLng(lat, lng), zoom: 16, zoomControl: false, scaleControl: false, mapDataControl: false });
+    new naver.maps.Marker({ position: new naver.maps.LatLng(lat, lng), map: map, title: name });
+    map.setOptions({ draggable: false, scrollWheel: false });
+  }
+  (function() { try { Kakao.init('YOUR_KAKAO_JAVASCRIPT_KEY'); } catch(e) {} })();
+  function openShare() { document.getElementById('sheet-overlay').classList.add('open'); document.getElementById('share-sheet').classList.add('open'); }
+  function closeShare() { document.getElementById('sheet-overlay').classList.remove('open'); document.getElementById('share-sheet').classList.remove('open'); }
+  function initShareButtons(d) {
+    var msg = '[부고] 故' + d.deceased.name + '님의 별세를 삼가 알려드립니다.\n발인 ' + d.schedule.funeral_date + ' ' + d.schedule.funeral_time + '\n' + d.venue.name + ' ' + d.venue.room + '\n\n';
+    var url = location.href;
+    document.getElementById('btn-kakao-share').onclick = function() {
+      try { Kakao.Share.sendDefault({ objectType: 'text', text: msg + url, link: { mobileWebUrl: url, webUrl: url } }); } catch(e) { showToast('카카오 앱 키를 설정해 주세요'); }
+      closeShare();
+    };
+    document.getElementById('btn-sms-share').href = 'sms:?body=' + encodeURIComponent(msg + url);
+    document.getElementById('btn-sms-share').onclick = function() { closeShare(); };
+  }
+  function copyLink() { copyText(location.href, '링크가 복사되었습니다'); closeShare(); }
+  function copyText(text, msg) {
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text).then(function() { showToast(msg); }); }
+    else { var el = document.createElement('textarea'); el.value = text; el.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(el); el.focus(); el.select(); document.execCommand('copy'); document.body.removeChild(el); showToast(msg); }
+  }
+  function showToast(msg) { var el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(function() { el.classList.remove('show'); }, 2200); }
+  render(loadData());
+<\/script>
+</body>
+</html>
+</script>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ── 비밀번호 (변경하려면 이 값을 수정) ── */
+  const ADMIN_PASSWORD = 'admin1234';
+
+  function checkPassword() {
+    const val = document.getElementById('pw-input').value;
+    if (val === ADMIN_PASSWORD) {
+      sessionStorage.setItem('adminAuth', '1');
+      document.getElementById('pw-overlay').style.display = 'none';
+    } else {
+      document.getElementById('pw-error').textContent = '비밀번호가 틀렸습니다.';
+      document.getElementById('pw-input').value = '';
+      document.getElementById('pw-input').focus();
+    }
+  }
+
+  document.getElementById('pw-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') checkPassword();
+  });
+
+  if (sessionStorage.getItem('adminAuth') === '1') {
+    document.getElementById('pw-overlay').style.display = 'none';
+  }
+
+  /* ── Firebase 설정 (Firebase 콘솔에서 복사한 값으로 교체) ── */
+  const FIREBASE_CONFIG = {
+    apiKey:            "AIzaSyDxpUD0GU0Lm5cYTgGXU8SXd-r0M4xSVAQ",
+    authDomain:        "bugo-d29c0.firebaseapp.com",
+    databaseURL:       "https://bugo-d29c0-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "bugo-d29c0",
+    storageBucket:     "bugo-d29c0.firebasestorage.app",
+    messagingSenderId: "796600365241",
+    appId:             "1:796600365241:web:e5327fb702d81c835d6b68",
+  };
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const dataRef = firebase.database().ref('bugoData');
+
+  const STORAGE_KEY = 'bugoData';
+
+  const DEFAULTS = {
+    hero: {
+      message: '故홍길동님께서\n2026년 4월 30일 00시 00분\n별세하셨음을 삼가 알려 드립니다.\n가시는 길 깊은 애도와 명복을\n빌어주시길 진심으로 바랍니다.'
+    },
+    deceased: { name: '홍길동', age: '86' },
+    mourners: [
+      { relation: '장남', name: '홍민준', phone: '01012345678' },
+      { relation: '차남', name: '홍민서', phone: '' },
+      { relation: '장녀', name: '홍지수', phone: '01098765432' },
+      { relation: '며느리', name: '김수연', phone: '' }
+    ],
+    schedule: {
+      death_date: '2026년 4월 30일 (목)', death_time: '00시 00분',
+      funeral_date: '2026년 5월 2일 (토)', funeral_time: '00시 00분'
+    },
+    venue: {
+      name: '서울성모병원 장례식장', room: '3호실',
+      address: '서울특별시 서초구 반포대로 222',
+      lat: 37.5014, lng: 127.0049
+    }
+  };
+
+  /* ── 데이터 로드 → 폼에 채우기 ── */
+  function loadIntoForm() {
+    dataRef.get().then(function(snapshot) {
+      fillForm(snapshot.val() || DEFAULTS);
+    }).catch(function() {
+      fillForm(DEFAULTS);
+    });
+  }
+
+  function fillForm(d) {
+    document.getElementById('hero-message').value  = d.hero.message;
+    document.getElementById('deceased-name').value = d.deceased.name;
+    document.getElementById('deceased-age').value  = d.deceased.age;
+    document.getElementById('death-date').value    = d.schedule.death_date;
+    document.getElementById('death-time').value    = d.schedule.death_time;
+    document.getElementById('funeral-date').value  = d.schedule.funeral_date;
+    document.getElementById('funeral-time').value  = d.schedule.funeral_time;
+    document.getElementById('venue-name').value    = d.venue.name;
+    document.getElementById('venue-room').value    = d.venue.room;
+    document.getElementById('venue-address').value = d.venue.address;
+    document.getElementById('venue-lat').value     = d.venue.lat;
+    document.getElementById('venue-lng').value     = d.venue.lng;
+    if (d.venue.lat && d.venue.lng) {
+      document.getElementById('coord-fields').style.display = 'grid';
+    }
+
+    // 상주 목록 렌더링
+    const list = document.getElementById('mourner-list');
+    list.innerHTML = '';
+    (d.mourners || []).forEach(function(m) { appendMournerRow(m); });
+  }
+
+  /* ── 상주 행 추가 ── */
+  function appendMournerRow(m) {
+    m = m || { relation: '', name: '', phone: '' };
+    const row = document.createElement('div');
+    row.className = 'mourner-row';
+    row.innerHTML = `
+      <input type="text" placeholder="장남" value="${esc(m.relation)}" data-field="relation">
+      <input type="text" placeholder="홍길동" value="${esc(m.name)}" data-field="name">
+      <input type="tel"  placeholder="010-0000-0000" value="${esc(m.phone)}" data-field="phone">
+      <button class="btn-remove" onclick="this.closest('.mourner-row').remove()" title="삭제">×</button>
+    `;
+    document.getElementById('mourner-list').appendChild(row);
+  }
+
+  function addMourner() { appendMournerRow(null); }
+
+  /* ── HTML 이스케이프 ── */
+  function esc(str) {
+    return (str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* ── 저장 ── */
+  function saveAll() {
+    dataRef.set(collectData())
+      .then(function() { showToast('저장되었습니다'); })
+      .catch(function() { showToast('저장 실패. Firebase 설정을 확인해 주세요.'); });
+  }
+
+  /* ── 주소 → 좌표 변환 (OpenStreetMap Nominatim) ── */
+  function geocodeAddress() {
+    const address = document.getElementById('venue-address').value.trim();
+    if (!address) {
+      setGeocodeStatus('주소를 먼저 입력해 주세요.', 'err');
+      return;
+    }
+
+    const btn = document.getElementById('btn-geocode');
+    btn.disabled = true;
+    btn.textContent = '🔍 검색 중...';
+    setGeocodeStatus('', '');
+
+    const url = 'https://nominatim.openstreetmap.org/search?q='
+      + encodeURIComponent(address)
+      + '&format=json&limit=1&accept-language=ko';
+
+    fetch(url, { headers: { 'Accept-Language': 'ko' } })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat).toFixed(6);
+          const lng = parseFloat(data[0].lon).toFixed(6);
+          document.getElementById('venue-lat').value = lat;
+          document.getElementById('venue-lng').value = lng;
+          document.getElementById('coord-fields').style.display = 'grid';
+          setGeocodeStatus('✓ 좌표를 찾았습니다 (' + lat + ', ' + lng + ')', 'ok');
+        } else {
+          setGeocodeStatus('주소를 찾지 못했습니다. 주소를 더 구체적으로 입력해 보세요.', 'err');
+        }
+      })
+      .catch(function() {
+        setGeocodeStatus('검색 중 오류가 발생했습니다. 인터넷 연결을 확인해 주세요.', 'err');
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.textContent = '📍 주소로 좌표 자동 입력';
+      });
+  }
+
+  function setGeocodeStatus(msg, type) {
+    const el = document.getElementById('geocode-status');
+    el.textContent = msg;
+    el.className = 'hint' + (type === 'ok' ? ' geocode-ok' : type === 'err' ? ' geocode-err' : '');
+  }
+
+  /* ── 폼 데이터 수집 (저장/내보내기 공용) ── */
+  function collectData() {
+    const rows = document.querySelectorAll('#mourner-list .mourner-row');
+    const mourners = Array.from(rows).map(function(row) {
+      return {
+        relation: row.querySelector('[data-field="relation"]').value.trim(),
+        name:     row.querySelector('[data-field="name"]').value.trim(),
+        phone:    row.querySelector('[data-field="phone"]').value.replace(/[^0-9]/g, '')
+      };
+    }).filter(function(m) { return m.name; });
+
+    return {
+      hero: { message: document.getElementById('hero-message').value },
+      deceased: {
+        name: document.getElementById('deceased-name').value.trim(),
+        age:  document.getElementById('deceased-age').value.trim()
+      },
+      mourners: mourners,
+      schedule: {
+        death_date:   document.getElementById('death-date').value.trim(),
+        death_time:   document.getElementById('death-time').value.trim(),
+        funeral_date: document.getElementById('funeral-date').value.trim(),
+        funeral_time: document.getElementById('funeral-time').value.trim()
+      },
+      venue: {
+        name:    document.getElementById('venue-name').value.trim(),
+        room:    document.getElementById('venue-room').value.trim(),
+        address: document.getElementById('venue-address').value.trim(),
+        lat:     document.getElementById('venue-lat').value.trim(),
+        lng:     document.getElementById('venue-lng').value.trim()
+      }
+    };
+  }
+
+  /* ── HTML 내보내기 ── */
+  function exportHTML() {
+    const data = collectData();
+
+    // 내장된 템플릿 읽기 (fetch 불필요)
+    let html = document.getElementById('index-template').textContent;
+
+    // 이스케이프된 </script> 복원
+    html = html.replace(/<\\\/script>/g, '</script>');
+
+    // render(loadData()); → render(실제데이터);
+    html = html.replace(
+      'render(loadData());',
+      'render(' + JSON.stringify(data, null, 2) + ');'
+    );
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'index.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast('index.html 다운로드 완료');
+  }
+
+  /* ── 토스트 ── */
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(function() { el.classList.remove('show'); }, 2200);
+  }
+
+  /* ── 초기화 ── */
+  loadIntoForm();
+</script>
+</body>
+</html>
