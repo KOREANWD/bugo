@@ -10,8 +10,6 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <!-- 카카오 지도 SDK (지오코딩용) -->
-  <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=c7f5063f7b600d34a52471f139e3fe75&libraries=services"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -818,20 +816,30 @@
     btn.textContent = '🔍 검색 중...';
     setGeocodeStatus('', '');
 
-    new kakao.maps.services.Places().keywordSearch(address, function(result, status) {
-      btn.disabled = false;
-      btn.textContent = '📍 주소로 좌표 자동 입력';
-      if (status === kakao.maps.services.Status.OK && result.length > 0) {
-        const lat = parseFloat(result[0].y).toFixed(6);
-        const lng = parseFloat(result[0].x).toFixed(6);
-        document.getElementById('venue-lat').value = lat;
-        document.getElementById('venue-lng').value = lng;
-        document.getElementById('coord-fields').style.display = 'grid';
-        setGeocodeStatus('✓ 좌표를 찾았습니다 (' + lat + ', ' + lng + ')', 'ok');
-      } else {
-        setGeocodeStatus('주소를 찾지 못했습니다. 장소명으로 다시 입력해 보세요.', 'err');
-      }
-    });
+    const query = encodeURIComponent(address + ' 대한민국');
+    fetch('https://nominatim.openstreetmap.org/search?q=' + query + '&format=json&limit=1&accept-language=ko', {
+      headers: { 'Accept-Language': 'ko' }
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat).toFixed(6);
+          const lng = parseFloat(data[0].lon).toFixed(6);
+          document.getElementById('venue-lat').value = lat;
+          document.getElementById('venue-lng').value = lng;
+          document.getElementById('coord-fields').style.display = 'grid';
+          setGeocodeStatus('✓ 좌표를 찾았습니다 (' + lat + ', ' + lng + ')', 'ok');
+        } else {
+          setGeocodeStatus('주소를 찾지 못했습니다. 도로명 주소로 입력해 보세요. (예: 경기도 의정부시 동일로 712)', 'err');
+        }
+      })
+      .catch(function() {
+        setGeocodeStatus('검색 중 오류가 발생했습니다.', 'err');
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.textContent = '📍 주소로 좌표 자동 입력';
+      });
   }
 
   function setGeocodeStatus(msg, type) {
