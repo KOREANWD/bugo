@@ -10,6 +10,8 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <!-- 카카오 지도 SDK (지오코딩용) -->
+  <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=c7f5063f7b600d34a52471f139e3fe75&libraries=services"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -816,29 +818,20 @@
     btn.textContent = '🔍 검색 중...';
     setGeocodeStatus('', '');
 
-    fetch('https://dapi.kakao.com/v2/local/search/keyword.json?query=' + encodeURIComponent(address), {
-      headers: { 'Authorization': 'KakaoAK 64c08d5023cdc9a48ba697587acb3444' }
-    })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.documents && data.documents.length > 0) {
-          const lat = parseFloat(data.documents[0].y).toFixed(6);
-          const lng = parseFloat(data.documents[0].x).toFixed(6);
-          document.getElementById('venue-lat').value = lat;
-          document.getElementById('venue-lng').value = lng;
-          document.getElementById('coord-fields').style.display = 'grid';
-          setGeocodeStatus('✓ 좌표를 찾았습니다 (' + lat + ', ' + lng + ')', 'ok');
-        } else {
-          setGeocodeStatus('주소를 찾지 못했습니다. 주소를 더 구체적으로 입력해 보세요.', 'err');
-        }
-      })
-      .catch(function() {
-        setGeocodeStatus('검색 중 오류가 발생했습니다. 인터넷 연결을 확인해 주세요.', 'err');
-      })
-      .finally(function() {
-        btn.disabled = false;
-        btn.textContent = '📍 주소로 좌표 자동 입력';
-      });
+    new kakao.maps.services.Places().keywordSearch(address, function(result, status) {
+      btn.disabled = false;
+      btn.textContent = '📍 주소로 좌표 자동 입력';
+      if (status === kakao.maps.services.Status.OK && result.length > 0) {
+        const lat = parseFloat(result[0].y).toFixed(6);
+        const lng = parseFloat(result[0].x).toFixed(6);
+        document.getElementById('venue-lat').value = lat;
+        document.getElementById('venue-lng').value = lng;
+        document.getElementById('coord-fields').style.display = 'grid';
+        setGeocodeStatus('✓ 좌표를 찾았습니다 (' + lat + ', ' + lng + ')', 'ok');
+      } else {
+        setGeocodeStatus('주소를 찾지 못했습니다. 장소명으로 다시 입력해 보세요.', 'err');
+      }
+    });
   }
 
   function setGeocodeStatus(msg, type) {
