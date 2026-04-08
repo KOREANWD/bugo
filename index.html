@@ -430,7 +430,8 @@
     ],
     schedule: {
       death_date: '2026년 4월 30일 (목)', death_time: '00시 00분',
-      funeral_date: '2026년 5월 2일 (토)', funeral_time: '00시 00분'
+      funeral_date: '2026년 5월 2일 (토)', funeral_time: '00시 00분',
+      burial_place: ''
     },
     venue: {
       name: '서울성모병원 장례식장', room: '3호실',
@@ -482,7 +483,11 @@
     <tr>
       <td class="label">발인</td>
       <td>${d.schedule.funeral_date} ${d.schedule.funeral_time}</td>
-    </tr>`;
+    </tr>
+    ${d.schedule.burial_place ? `<tr>
+      <td class="label">장지</td>
+      <td>${d.schedule.burial_place}</td>
+    </tr>` : ''}`;
 
     tbody.innerHTML = rows;
 

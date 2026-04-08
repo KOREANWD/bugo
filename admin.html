@@ -421,6 +421,10 @@
         <input type="text" id="funeral-time" placeholder="00시 00분">
       </div>
     </div>
+    <div class="field">
+      <label>장지</label>
+      <input type="text" id="burial-place" placeholder="예) 경기도 성남시 분당구 ○○공원">
+    </div>
   </div>
 
   <!-- 5. 빈소 위치 -->
@@ -637,6 +641,7 @@
     rows += '<tr><td colspan="2" style="padding-top:8px;"><\/td><\/tr>';
     rows += '<tr><td class="label">별세<\/td><td>' + d.schedule.death_date + ' ' + d.schedule.death_time + '<\/td><\/tr>';
     rows += '<tr><td class="label">발인<\/td><td>' + d.schedule.funeral_date + ' ' + d.schedule.funeral_time + '<\/td><\/tr>';
+    if (d.schedule.burial_place) rows += '<tr><td class="label">장지<\/td><td>' + d.schedule.burial_place + '<\/td><\/tr>';
     tbody.innerHTML = rows;
     document.getElementById('venue-name').textContent = d.venue.name;
     document.getElementById('venue-room').textContent = d.venue.room;
@@ -733,7 +738,8 @@
     ],
     schedule: {
       death_date: '2026년 4월 30일 (목)', death_time: '00시 00분',
-      funeral_date: '2026년 5월 2일 (토)', funeral_time: '00시 00분'
+      funeral_date: '2026년 5월 2일 (토)', funeral_time: '00시 00분',
+      burial_place: ''
     },
     venue: {
       name: '서울성모병원 장례식장', room: '3호실',
@@ -759,6 +765,7 @@
     document.getElementById('death-time').value    = d.schedule.death_time;
     document.getElementById('funeral-date').value  = d.schedule.funeral_date;
     document.getElementById('funeral-time').value  = d.schedule.funeral_time;
+    document.getElementById('burial-place').value  = d.schedule.burial_place || '';
     document.getElementById('venue-name').value    = d.venue.name;
     document.getElementById('venue-room').value    = d.venue.room;
     document.getElementById('venue-address').value = d.venue.address;
@@ -869,7 +876,8 @@
         death_date:   document.getElementById('death-date').value.trim(),
         death_time:   document.getElementById('death-time').value.trim(),
         funeral_date: document.getElementById('funeral-date').value.trim(),
-        funeral_time: document.getElementById('funeral-time').value.trim()
+        funeral_time: document.getElementById('funeral-time').value.trim(),
+        burial_place: document.getElementById('burial-place').value.trim()
       },
       venue: {
         name:    document.getElementById('venue-name').value.trim(),
