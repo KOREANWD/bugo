@@ -170,6 +170,21 @@
 
     #naver-map { width: 100%; height: 100%; }
 
+    .map-open-btn {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      font-size: 14px;
+      color: var(--text-sub);
+      text-align: center;
+      text-decoration: none;
+      font-family: inherit;
+    }
+
     .map-placeholder {
       display: flex;
       flex-direction: column;
@@ -339,6 +354,7 @@
     <div class="map-wrap">
       <div id="naver-map"></div>
     </div>
+    <a class="map-open-btn" id="btn-naver-map" href="#">네이버 지도에서 열기</a>
   </div>
 
 </div>
@@ -476,9 +492,30 @@
 
     // 지도
     initNaverMap(parseFloat(d.venue.lat), parseFloat(d.venue.lng), d.venue.name);
+    initMapButton(d.venue.lat, d.venue.lng, d.venue.name);
 
     // 공유 버튼
     initShareButtons(d);
+  }
+
+  /* ── 네이버 지도 앱 열기 ── */
+  function initMapButton(lat, lng, name) {
+    const appname = 'koreanwd.github.io.bugo';
+    const q = 'lat=' + lat + '&lng=' + lng + '&name=' + encodeURIComponent(name) + '&appname=' + appname;
+    const webUrl = 'https://map.naver.com/p/search/' + encodeURIComponent(name);
+    document.getElementById('btn-naver-map').onclick = function(e) {
+      e.preventDefault();
+      const ua = navigator.userAgent;
+      if (/Android/i.test(ua)) {
+        location.href = 'intent://place?' + q + '#Intent;scheme=nmap;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;package=com.nhn.android.nmap;S.browser_fallback_url=' + encodeURIComponent(webUrl) + ';end';
+      } else if (/iPhone|iPad|iPod/i.test(ua)) {
+        const t = setTimeout(function() { location.href = webUrl; }, 1500);
+        document.addEventListener('visibilitychange', function() { if (document.hidden) clearTimeout(t); });
+        location.href = 'nmap://place?' + q;
+      } else {
+        window.open(webUrl, '_blank');
+      }
+    };
   }
 
   /* ── 네이버 지도 ── */
